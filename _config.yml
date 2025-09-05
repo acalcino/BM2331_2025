@@ -6,4 +6,4 @@ description: Bioinformatics I Tutorial Materials
 
 plugins:
 - jekyll-remote-theme
-remote_theme: niklasbuschmann/contrast
+remote_theme: pages-themes/slate@v0.2.0
