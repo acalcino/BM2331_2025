@@ -528,7 +528,7 @@ This creates the my_df object which will be visible in your environment pane. Th
 3 Mary  27   FALSE
 ```
 
-In a data frame, the `$` symbol is uesed to refer to a particular column. In the first example above, we wanted to determine the mean of all ages so we used the `mean()` function on `my_df$age`. Try do the same on `$name` or `$married` to see what happens. In the fourth example, we produced a simple scatter plot of the `age` data using the `plot()` function. Try the same for `$married` and `$name` to see what happens. If you want to investigate all the option available to the `plot()` function, type `?plot' and have a read in the bottom right hand pane.
+In a data frame, the `$` symbol is uesed to refer to a particular column. In the first example above, we wanted to determine the mean of all ages so we used the `mean()` function on `my_df$age`. Try do the same on `$name` or `$married` to see what happens. In the fourth example, we produced a simple scatter plot of the `age` data using the `plot()` function. Try the same for `$married` and `$name` to see what happens. If you want to investigate all the option available to the `plot()` function, type `?plot` and have a read in the bottom right hand pane.
 
 In the final example we created a new data frame object called `older_unmarried` by subsetting `my_df`.  To do this, we first indicate that we want to subset the object `my_df` by defining it with `my_df[]`. The code inside the square brackets describes how we would like to subset it. In our case we are setting two conditions to define our subset and these are linked with a `&` symbol. Read this line carefully to make sure you understand it.
 
