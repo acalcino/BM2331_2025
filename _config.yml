@@ -2,7 +2,6 @@
 #theme: jekyll-theme-slate
 
 title: BM2331 - Decoding DNA
-description: Bioinformatics I Tutorial Materials
 
 plugins:
 - jekyll-remote-theme
