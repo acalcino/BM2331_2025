@@ -602,3 +602,4 @@ R Markdown is a fantastic way to make dynamic documents that execute underlying 
 ![curious](images/curious.gif)
 
 </div>
+ 
