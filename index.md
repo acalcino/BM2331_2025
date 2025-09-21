@@ -14,3 +14,5 @@ Click [here](http://bioinformatics.nec-mf-proj01.cloud.edu.au/rstudio/) to acces
 ## Course Outline
 
 Week 1: [Bash, R and common file formats](Tutorial_1/01_intro)
+
+Week 2: [Navigating NCBI and other databases](Tutorial_2/02_databases.md)
