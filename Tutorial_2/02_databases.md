@@ -36,10 +36,8 @@ This is why we have databases. Around the world, many institutes and government 
 Let's try a search together. In the box at the top, type in `aquaporin` and hit enter. On the left you might notice a dropdown box where you can select the database your want to search but for now, let's just leave it set at `All Databases`. Aquaporin is a gene family that encodes proteins that allow water to pass across cell membranes. It often forms tetramers (four of the same protein interacting with one another) and it's just pretty. Look at this thing!
 
 <div align="center">
-
- ![aquaporin](images/aquaporin.gif)
- 
- </div>
+  <img src="images/aquaporin.gif" alt="aquaporin">
+</div>
  
 On the next page you'll see all the hits you got for aquaporin in each of the databases hosted by NCBI. For now we are interested in the `Nucleotide` database which houses individual gene sequences. At the time that I'm writing this, there are 271,486 hits for aquaporin in this database but this may change by the time you see it. Click it to see all the hits.
  
