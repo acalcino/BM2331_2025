@@ -63,7 +63,7 @@ When collecting your primate sequences, you could try the [RefSeq](https://www.n
 
 ### Notebooks
 
-Before leaving today, make sure you get your project notebook kick started. In RStudio, you can click `File`, `New File`, `R Markdown` to create a new R Markdown object, but for now it's probably best to switch to the command line and make your own copy of an example doc that I've created in `~/shared-data/tut_2/report_example.Rmd`. 
+Before leaving today, make sure you get your project notebook kick started. In [RStudio](https://rstudio.bioinformatics.guide/), you can click `File`, `New File`, `R Markdown` to create a new R Markdown object, but for now it's probably best to switch to the command line and make your own copy of an example doc that I've created in `~/shared-data/tut_2/report_example.Rmd`. 
 
 To do this, navigate to to your `~/working-directory`, create a new folder called `reports` or something similar and then copy the `report_example.Rmd` file to this new directory. You can then open and edit this file in RStudio.
 
