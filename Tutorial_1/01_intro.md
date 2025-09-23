@@ -593,7 +593,16 @@ Another great feature of R is R Markdown, which is a file format that allows you
 
 ![RMarkdown](images/rmarkdown.png)
 
-At the top there is a header bracketed by `---` at the top and bottom. By default it chooses to produce an html report but if you prefer pdf, change it here. The line knitr::opts_chunk$set(echo = TRUE) sets global default options for all code chunks in your R Markdown document. `echo = TRUE` means that it will output the code and the output in the final document. If you just want the output and not the code, change this to `FALSE`. Following this, we have a block of text with the header maked by `##`. Under the text block we have our first code block which gives a summary of an in-built dataset called `cars`. Next we have another text block followed by a code block that plots another in-built dataset called `pressure`. If you want to see the output of this document, click `Knit` at the top. The first time you do this, you'll have to save your file. Make sure you use the `.rmd` suffix to show that its an R Markdown type file. Try switching between html and pdf to see the difference.
+At the top there is a header bracketed by `---` at the top and bottom. By default it chooses to produce an html report but if you prefer pdf, change it here. The line knitr::opts_chunk$set(echo = TRUE) sets global default options for all code chunks in your R Markdown document. `echo = TRUE` means that it will output the code and the output in the final document. If you just want the output and not the code, change this to `FALSE`. Following this, we have a block of text with the header maked by `##`. Under the text block we have our first code block which gives a summary of an in-built dataset called `cars`. Next we have another text block followed by a code block that plots another in-built dataset called `pressure`. If you want to see the output of this document, click `Knit` at the top. The first time you do this, you'll have to save your file. Make sure you use the `.rmd` suffix to show that its an R Markdown type file. Try switching between html and pdf to see the difference. If you do go with pdf, due to idiosyncrasies with the install on our particular server, you'll need to run the following lines of code before hitting `knit`:
+
+```R
+library(Biostrings)
+library(tinytex)
+
+Sys.setenv(PATH = paste("/opt/TinyTeX/bin/x86_64-linux", Sys.getenv("PATH"), sep = ":"))
+```
+
+You can either include this as a code block with `echo=FASLE, include=FALSE` or just run it on the console before hitting `knit`. This isn't consequential for your report, it's just setting up the correct environment variables so that R knows where to find the programs needed to create the pdf file.
 
 R Markdown is a fantastic way to make dynamic documents that execute underlying code and if the code or the data ever changes, you just hit the `Knit` button again to make the necessary updates. For this reason, it's brilliant for **reproducibility** which is an essential trait of good bioinformaticians. When we present results, we need to show how we came to those results and the best way to do that is to present the underlying code along with the results. R Markdown combines both of those things into a single document which also makes it excellent for producing reports for your university lecturers to mark.
 
