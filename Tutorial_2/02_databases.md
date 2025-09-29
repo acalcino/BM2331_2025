@@ -36,10 +36,8 @@ This is why we have databases. Around the world, many institutes and government 
 Let's try a search together. In the box at the top, type in `aquaporin` and hit enter. On the left you might notice a dropdown box where you can select the database your want to search but for now, let's just leave it set at `All Databases`. Aquaporin is a gene family that encodes proteins that allow water to pass across cell membranes. It often forms tetramers (four of the same protein interacting with one another) and it's just pretty. Look at this thing!
 
 <div align="center">
-
- ![aquaporin](images/aquaporin.gif)
- 
- </div>
+  <img src="images/aquaporin.gif" alt="aquaporin">
+</div>
  
 On the next page you'll see all the hits you got for aquaporin in each of the databases hosted by NCBI. For now we are interested in the `Nucleotide` database which houses individual gene sequences. At the time that I'm writing this, there are 271,486 hits for aquaporin in this database but this may change by the time you see it. Click it to see all the hits.
  
@@ -65,7 +63,7 @@ When collecting your primate sequences, you could try the [RefSeq](https://www.n
 
 ### Notebooks
 
-Before leaving today, make sure you get your project notebook kick started. In RStudio, you can click `File`, `New File`, `R Markdown` to create a new R Markdown object, but for now it's probably best to switch to the command line and make your own copy of an example doc that I've created in `~/shared-data/tut_2/report_example.Rmd`. 
+Before leaving today, make sure you get your project notebook kick started. In [RStudio](https://rstudio.bioinformatics.guide/), you can click `File`, `New File`, `R Markdown` to create a new R Markdown object, but for now it's probably best to switch to the command line and make your own copy of an example doc that I've created in `~/shared-data/tut_2/report_example.Rmd`. 
 
 To do this, navigate to to your `~/working-directory`, create a new folder called `reports` or something similar and then copy the `report_example.Rmd` file to this new directory. You can then open and edit this file in RStudio.
 
@@ -73,7 +71,16 @@ At the top of this doc, you'll see an `output` line which specifies that this fi
 
 Below this you can introduce your project and then start adding code blocks to import your fasta etc. Here's a screenshot of the beginnings of my example report. By the time we get to week six, this should be fleshed out into a complete report which you will submit for assessment. REMEMBER: Make sure to save your R Markdown file to an appropriate location within your `~/working_directory`. 
 
-When you're happy with your report, you can hit the `Knit` button at the top of your rmd file pane which should save the file and create your pdf report which will be saved to the same location as your rmd file.
+When you're happy with your report, you can hit the `Knit` button at the top of your rmd file pane which should save the file and create your pdf report which will be saved to the same location as your rmd file. Before you do this though, due to idiosyncrasies with the install on our particular server, you'll need to run the following lines of code before hitting `knit`:
+
+```R
+library(Biostrings)
+library(tinytex)
+
+Sys.setenv(PATH = paste("/opt/TinyTeX/bin/x86_64-linux", Sys.getenv("PATH"), sep = ":"))
+```
+
+You can either include this as a code block with `echo=FASLE, include=FALSE` or just run it on the console before hitting `knit`. This isn't consequential for your report, it's just setting up the correct environment variables so that R knows where to find the programs needed to create the pdf file.
 
 ![report](images/report.png)
 
