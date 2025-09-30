@@ -195,7 +195,7 @@ test_user_1@bioinfo:~/working-directory/tut_3/blastdb/nt$ makeblastdb -dbtype nu
 
 I this command, we defined the database type (nucleotide), the input fasta sequence from which the database will be built (Homo_sapiens.GRCh38.cdna.all.fa), the input type (fasta) and the output filename prefix (human_nt). We also included the flags `-parse_seqids` and `-hash_index` which will firstly tell `makeblastdb` to use the sequence ids in the input file rather than internally created identifiers, and secondly, will create a lookup hash index. Together, these allow you to extract sequences from the database using the sequence ids, but we will come to this in a bit.
 
-We can now use this database to find alignments between an input sequence and those making up the human transcriptome. Run `blastn -help` to get a list of the options available for blastn. Have a go at creating your own blastn script to find genes with similarity to the piwi sequence you have in `~/shared-data/tut_3/seqs`. In this directory you will find two nucleotide sequences, one from a sperm whale and one from a hydra (cnidarian). Try both out and compare your results. Try modifying the e value to see how this impacts things. While you can experiment with which other parameters to moodify, make sure you use these at a minimum:
+We can now use this database to find alignments between an input sequence and those making up the human transcriptome. Run `blastn -help` to get a list of the options available for blastn. Have a go at creating your own blastn script to find genes with similarity to the piwi sequence you have in `~/shared-data/tut_3/seqs`. In this directory you will find two nucleotide sequences, one from a sperm whale and one from a hydra (cnidarian). Try both out and compare your results. Try modifying the e value to see how this impacts things. While you can experiment with which other parameters to modify, make sure you use these at a minimum:
 
 ```bash
 -query  - Your input fasta file (piwi_nt.fa for this example)
@@ -228,7 +228,7 @@ This rapidly retrieves the sequence corresponding to our query of `ENST000006321
 
 ## InterPro
 
-As we learnt in the last lecture, proteins are composed of specific three dimensional motifs called 'domains'. These domains perform specific and conserved roles within a protein and act like modules that have been frequently rearranged over evolutionary time to create various configurations to carry out specific roles.
+As we learnt in the last lecture, the key to a protein's function lies in its shape and its distribution of charges. In lecture 7, we will learn about the modularity of proteins and their architectural organisation into 'domains'. These domains perform specific and conserved roles in proteins and are frequently rearranged over evolutionary time to create various configurations that carry out specific roles.
 
 ![domains](images/domains.png)
 
