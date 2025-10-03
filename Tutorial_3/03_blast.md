@@ -286,7 +286,7 @@ wget "INSERT_YOUR_URL_HERE" -O PF02171.hmm.gz
 
 You can now hit enter. wget is a command to download files from the internet to your current location. When a URL links directly to a filename, you don't need to include the `-O` option but as this URL points to an API endpoint, you do need to give wget a name to save the file as.
 
-As this file is gzipped, you can't just inspect it directly, for example with `cat`. Instead, try using `zcat` and pipe then output to `less`.
+As this file is gzipped, you can't just inspect it directly, for example with `cat`. Instead, try using `zcat` and then pipe the output to `less`.
 
 ![hmm](images/hmm.png)
 
