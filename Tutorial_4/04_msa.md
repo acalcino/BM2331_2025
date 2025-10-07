@@ -1,5 +1,7 @@
 # Multiple sequence alignment
 
+##MSA
+
 By this stage you should have created a multi fasta file containing the amino acid sequences of all the genes in your allocated gene family from at least four species. Today we are going to take that fasta file and use it to create a multiple sequence alignment (MSA) which we will be able to use subsequently as input for phylogenetics.
 
 Today we will be trying to do as much as we can in R so make sure to write all your code and comments into your RMarkdown document. Remember, this document will be assessed and it should be completely understandable as a stand along document by an external reader. For that reason, it is extremely important that you give sufficient details at every step about what you are doing and why. If you are importing a file that you created outside of this document (ie. your multi fasta), you should write a paragraph or two explaining what the file is that you are importing and how it was created. For all code, make sure you comment it well using comment lines (# Followed by a comment).
@@ -74,6 +76,8 @@ msaPrettyPrint(aligned_aa, file="msa_muscle_alignment.pdf", askForOverwrite=FALS
 
 ![msa](images/msa.png)
 
+## MAFFT
+
 Now lets try MAFFT on the command line. Either switch to the `Terminal` tab in RStudio or open up your terminal window and ssh into the server.
 
 ```bash
@@ -90,8 +94,71 @@ mkdir mafft
 cd mafft
 
 # Run mafft
-mafft --maxiterate 1000 --genafpair  ../../seqs/hox_ciona.fa >hox_ciona_mafft_alignment.fa
+mafft --maxiterate 1000 --genafpair  ../../seqs/hox_ciona.fa >hox_ciona_mafft_genafpair_alignment.fa
 
 ```
 
-Now, go back to R and try and follow the method above to create a `readAAMultipleAlignment` object from it. If you like, you can also generate a `msaPrettyPrint` pdf of this alignment too.
+Compare this to the output you get using `--localpair`.
+
+```bash
+mafft --maxiterate 1000 --localpair  ../../seqs/hox_ciona.fa >hox_ciona_mafft_localpair_alignment.fa
+```
+Now, go back to R and try and follow the method above to create a create a `msaPrettyPrint` pdf of this alignment too. Remember to import the mafft alignment using `readAAStringSet`.
+
+There are graphical programs for looking at alignments too. I like one called Aliview which can be downloaded from [here](https://ormbunkar.se/aliview/) and installed on your own computer. Once you do this, you can use `scp` to download the MSA file to your computer and then open it in Aliview.
+
+```bash
+
+# Make sure to use the correct username, filepath and filename
+scp username@bioinformatics.nec-mf-proj01.cloud.edu.au:/home/andrewc/working-directory/phylogenetic_project/msa/aligned_sequences.fa ./
+
+```
+
+![aliview](images/aliview.png)
+
+## Trimming
+
+Multiple sequence alignment algorithms sometimes make mistakes in highly variable regions (rapid evolution makes homology unclear), regions with many insertions/deletions, terminal (end) regions of sequences and low-complexity regions. These misalignments can cause problems in the eventual phylogenetic tree because they can suggest that evolutionary relationships that don't exist. Phylogenetic models assume positions are homologous and so if you have misaligned regions, this breakes this assumption.
+
+This is why we trim our alignments before doing phylogenetic analysis - to remove poorly aligned regions that contain little to no phylogenetic signal. There is always the risk that we may clip off some correctly aligned positions, but this is a balance we need to manage.
+
+As with aligners, there are many programs available to trim alignments but today we will go with [trimal](https://github.com/inab/trimal). This is another command line program but let's execute it from within R using a `system` command.
+
+```R
+
+system("trimal -in ~/working-directory/phylogenetic_project/msa/mafft/hox_ciona_mafft_genafpair_alignment.fa -out ~/working-directory/phylogenetic_project/msa/mafft/hox_ciona_trimal_automated.fa -automated1")
+
+```
+
+Instead of `-automated1`, try one of the other options such as `-gappyout` or `-gt 0.5`. Have a read of what these do by bringing up the trimal help file on the command line.
+
+Another option is [gblocks](https://home.cc.umanitoba.ca/~psgendb/doc/Castresana/Gblocks_documentation.html#:~:text=Gblocks%20is%20a%20computer%20program,of%20DNA%20or%20protein%20sequences.). This is more sophisticated than trimal but doesn't seem to work very well if you don't have a large alignment file.
+
+
+```R
+
+# Read in the alignment file
+aligned <- readAAStringSet("msa/mafft/hox_ciona_mafft_genafpair_alignment.fa")
+
+# Modify the headers because Gblocks doesn't like long headers. This shortens them by removing everything from the first space onwards
+names(aligned) <- sub(" .*", "", names(aligned))
+
+# Convert to matrix
+aligned_ape <- as.AAbin(aligned)
+aligned_matrix <- as.matrix(aligned_ape)
+
+# Run the alignment with fairly relaxed parameters at first
+aligned_trimmed <- gblocks(aligned_matrix,
+                           b1 = 0.5,
+                           b3 = 10,
+                           b4 = 5,
+                           b5 = "h",
+                           exec = "/usr/local/bin/Gblocks")
+                           
+# See how long your alignment is after trimming
+cat("After Gblocks:", ncol(aligned_trimmed), "\n")
+
+# Save to file
+write.FASTA(aligned_trimmed, "msa/mafft/hox_ciona_gblocks_trimmed.fa")
+
+```
