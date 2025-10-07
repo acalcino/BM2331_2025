@@ -1,6 +1,6 @@
 # Multiple sequence alignment
 
-##MSA
+## MSA
 
 By this stage you should have created a multi fasta file containing the amino acid sequences of all the genes in your allocated gene family from at least four species. Today we are going to take that fasta file and use it to create a multiple sequence alignment (MSA) which we will be able to use subsequently as input for phylogenetics.
 
