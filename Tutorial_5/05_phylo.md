@@ -82,11 +82,13 @@ write.tree(nj_tree, file = "trees/NJ/NJ_tree.nwk"
 We can also calculate the confidence level of each node in the tree by `bootstrapping` it. Bootstrapping is a statistical resampling method used to estimate the reliability of a result by repeatedly sampling from your original data with replacement. In this case, *replacement* means to randomly sample columns from your MSA, rather than using the original sequence order to see if these purturbations influence the final topology of the tree. The theory is that if your tree is **robust**, this process of resampling with replacement should produce a tree with the same topology more often than not. Topology referes to how each sample relates to one another. Here's an example:
 
 Original aligment of 8 amino acid sequeces
->        Position: 1  2  3  4  5  6  7  8
->Sequence A:        M  K  R  D  L  M  R  E
->Sequence B:        M  K  H  D  V  M  R  Q
->Sequence C:        L  S  R  D  L  I  G  E
->Sequence D:        L  S  H  N  V  I  G  Q
+```text
+        Position: 1  2  3  4  5  6  7  8
+Sequence A:        M  K  R  D  L  M  R  E
+Sequence B:        M  K  H  D  V  M  R  Q
+Sequence C:        L  S  R  D  L  I  G  E
+Sequence D:        L  S  H  N  V  I  G  Q
+```
 
 This creates a tree with the topology:
 
