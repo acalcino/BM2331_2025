@@ -83,57 +83,88 @@ We can also calculate the confidence level of each node in the tree by `bootstra
 
 Original aligment of 8 amino acid sequeces
 ```text
-        Position: 1  2  3  4  5  6  7  8
+
+Position:          1  2  3  4  5  6  7  8
 Sequence A:        M  K  R  D  L  M  R  E
 Sequence B:        M  K  H  D  V  M  R  Q
 Sequence C:        L  S  R  D  L  I  G  E
 Sequence D:        L  S  H  N  V  I  G  Q
+
 ```
 
 This creates a tree with the topology:
 
->Original tree topology: ((A,B),(C,D))
+```text
 
+Original tree topology: ((A,B),(C,D))
+
+```
 Now we do bootstrap replicate 1:
 Randomly selected positions: 1, 1, 3, 5, 2, 7, 8, 4
->Position:         1  1  3  5  2  7  8  4
->Sequence A:        M  M  R  L  K  R  E  D
->Sequence B:        M  M  H  V  K  R  Q  D
->Sequence C:        L  L  R  L  S  G  E  D
->Sequence D:        L  L  H  V  S  G  Q  N
+
+```text
+
+Position:          1  1  3  5  2  7  8  4
+Sequence A:        M  M  R  L  K  R  E  D
+Sequence B:        M  M  H  V  K  R  Q  D
+Sequence C:        L  L  R  L  S  G  E  D
+Sequence D:        L  L  H  V  S  G  Q  N
+
+```
 
 Now we recalculate topology:
 
->Bootstrap tree 1: ((A,B),(C,D)) ✓ Same topology
+```text
+
+Bootstrap tree 1: ((A,B),(C,D)) ✓ Same topology
+
+```
 
 Now we do bootstrap replicate 2:
 
 Randomly selected positions: 2, 4, 4, 6, 8, 3, 1, 1
->Position:         2  4  4  6  8  3  1  1
->Sequence A:        K  D  D  M  E  R  M  M
->Sequence B:        K  D  D  M  Q  H  M  M
->Sequence C:        S  D  D  I  E  R  L  L
->Sequence D:        S  N  N  I  Q  H  L  L
+
+```text
+
+Position:         2  4  4  6  8  3  1  1
+Sequence A:        K  D  D  M  E  R  M  M
+Sequence B:        K  D  D  M  Q  H  M  M
+Sequence C:        S  D  D  I  E  R  L  L
+Sequence D:        S  N  N  I  Q  H  L  L
+
+```
 
 Calculate topology:
 
+```text
+
 >Bootstrap tree 2: (A,(B,(C,D))) ✗ Different topology!
+
+```
 
 After doing this 100 or 10000 times, we see how many trees we build from these resampled MSAs have the same or different topology.
 
->Clade (A,B):    appeared in 85 trees → Bootstrap support = 85%
->Clade (C,D):    appeared in 92 trees → Bootstrap support = 92%
->Clade ((A,B),(C,D)): appeared in 78 trees → Bootstrap support = 78%
+```text
+
+Clade (A,B):    appeared in 85 trees → Bootstrap support = 85%
+Clade (C,D):    appeared in 92 trees → Bootstrap support = 92%
+Clade ((A,B),(C,D)): appeared in 78 trees → Bootstrap support = 78%
+
+```
 
 And now we can add these bootstrap values to our original tree:
 
->                         78
->            ┌────────────┴────────────┐
->            │                         │
->         85 │                      92 │
->    ┌───────┴───────┐        ┌────────┴────────┐
->    │               │        │                 │
->Sequence A       Sequence B   Sequence C     Sequence D
+```text
+
+                         78
+            ┌────────────┴────────────┐
+            │                         │
+         85 │                      92 │
+    ┌───────┴───────┐        ┌────────┴────────┐
+    │               │        │                 │
+Sequence A       Sequence B   Sequence C     Sequence D
+
+```
 
 Let's do this for our tree.
 
