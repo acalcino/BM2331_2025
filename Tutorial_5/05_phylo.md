@@ -356,26 +356,26 @@ You can now go back to the `NJ(dm)` step above to use this new distance matrix t
 Rather than using ML to calculate a distance matrix for a neighbour joining tree, we can use ML to produce the tree itself. This uses a completely different approach in which, rather than first calculating a distance matrix and then clustering branches to minimise branch lengths, we instead use a ML approach to evaluate tree topologies directly against the multiple sequence alignment. In the end, this selects the tree with the topology that maximises the likelihood of the alignment data. This is the workflow of producing a NJ tree using a ML distance matrix:
 
 >Alignment
-    ↓
-Calculate ML distances (pairwise)
-    ↓
-Distance Matrix
-    ↓
-NJ clustering algorithm
-    ↓
-Tree
+>    ↓
+>Calculate ML distances (pairwise)
+>    ↓
+>Distance Matrix
+>    ↓
+>NJ clustering algorithm
+>    ↓
+>Tree
 
 and this is what the workflow of producing a ML tree:
 
 >Alignment
-    ↓
-Propose tree topology
-    ↓
-Calculate likelihood of entire alignment given tree
-    ↓
-Try different topologies
-    ↓
-Find tree with maximum likelihood
+>    ↓
+>Propose tree topology
+>    ↓
+>Calculate likelihood of entire alignment given tree
+>    ↓
+>Try different topologies
+>    ↓
+>Find tree with maximum likelihood
 
 A logical question to ask is, what tree topology should we initially propose? There are several options including using a random topology or using a *star* topology in which every sequence radiates out of the centre, but most of the time, the best option is to first produce an NJ tree and use this to kick start your ML tree production. As we already have a NJ tree, we can just use that!
 
