@@ -83,7 +83,9 @@ add.scale.bar(x = 0, y = 0.5, cex = 0.7, lwd = 2)
 
 ```
 
-This creates an `unrooted` tree which you will be able to see in your RStudio Plot pane. Have a look at the tree you've created to see if it makes evolutionary sense ie. do related sequences share a common ancestor? Next up, we'll root the tree by defining an outgroup which we spoke about in our previous tutorial. 
+This creates an `unrooted` tree which you will be able to see in your RStudio Plot pane. Have a look at the tree you've created to see if it makes evolutionary sense ie. do related sequences share a common ancestor? Next up, we'll root the tree by defining an outgroup which we spoke about in our previous tutorial. Remember that rooting a tree uses prior knowledge of your sequences to declare which is most divergent, prior to plotting. Rooting at different nodes preserves topology but changes the interpretation of evolutionary relationships.
+
+![root](images/root.png)
 
 ```R
 
