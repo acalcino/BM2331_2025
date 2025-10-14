@@ -322,23 +322,21 @@ Log-likelihood = ln(0.000022) = -8.42
 Log-likelihood
 
      |
--7.5 |              ★ (maximum at d ≈ 0.5)
-     |            /   \
--8.0 |          /       \
-     |        /           \
--8.5 |      /               \
-     |    /                   \
--9.0 |  /                       \
-     | ●                         ●
--9.5 |/__________________________\____
+-7.5 |            ★ (maximum at d ≈ 0.5)
+     |         /     \
+-8.0 |        /       \
+     |      /           \
+-8.5 |     /             \
+     |    /               \
+-9.0 |   /                  \
+     |  ●                    ●
+-9.5 |/________________________\_
      0   0.2  0.4  0.6  0.8  1.0    d (substitutions/site)
 
      d=0.1        d=0.5        d=1.0
      ln(L)=-9.42  ln(L)=-7.41  ln(L)=-8.42
      
 ```
-
-
 
 Ok, let's try create a maximum likelihood distance matrix and then use this to recreate our NJ tree. In this example, as we are using the `JTT` model which is an emperically derived model based on observed substitution rates.
 
@@ -350,23 +348,3 @@ dm <- dist.ml(phyDat_alignment, model = "JTT")
 ```
 
 You can now go back to the `NJ(dm)` step above to use this new distance matrix to compare it to the old p-distance matrix we created first.
-
-It also calculates this likelihood using a range of possible values of `d` so that , and it does this multiple times using a range of values for distance
-
-
-Neighbour Joining doesn't care about the evolutionary process - it just takes a distance matrix and groups the sequences accordingly.
-
-
-
-# Test evolutionary models
-cat("Testing evolutionary models for protein sequences...\n")
-model_test <- modelTest(phyDat_alignment, tree = tree_init, 
-                        model = c("JTT", "WAG", "LG", "Dayhoff", "cpREV", "Blosum62"),
-                        G = TRUE, I = TRUE)
-
-# Display model test results
-print(model_test)
-
-# Get best model based on AIC
-best_model <- model_test$Model[which.min(model_test$AIC)]
-cat("\nBest model based on AIC:", best_model, "\n\n")
