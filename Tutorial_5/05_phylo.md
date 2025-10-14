@@ -406,4 +406,76 @@ ln L
      
 ```
 
+Before we get to this though, we need to choose a model. Models differ because not every set of genes or proteins evolve in the same way and at the same rate. Let's run a test to see which model fits our dataset best.
 
+
+```R
+
+# Run the model test
+model_test <- modelTest(phyDat_alignment, tree = nj_tree_outgroup, 
+                        model = c("JTT", "WAG", "LG", "Dayhoff", "cpREV", "Blosum62"),
+                        G = TRUE, I = TRUE)
+
+# Select the model with the lowest AIC score as the best
+best_model <- model_test$Model[which.min(model_test$AIC)]
+
+```
+
+This tests the following six models, however many, many more than this have been developed:
+
+>JTT: General protein evolution model  
+WAG: Emphasizes different amino acid frequencies  
+LG: More recent, based on larger datasets  
+Dayhoff: Older model, based on closely related proteins  
+cpREV: Specifically for chloroplast proteins  
+Blosum62: Based on conserved blocks in alignments  
+
+It also tests if allowing rate variation (meaning it won't assume every site evolves at the same rate) will improve the result (G) or if allowing some sites to be invariant will improve the result (I). The most common metric to look at to determine the best model for your alignment is `AIC` which stands for *Akaike Information Criterion*. You don't really need to know the deep mathematics behind how it works, just know that lower is better!
+
+Now that we know the best model for our data, we can calculate our ML tree.
+
+```R
+
+# Create pml object using best model
+pml_obj <- pml(nj_tree_outgroup, phyDat_alignment, model = best_model)
+
+# Optimise everything
+ml_tree <- optim.pml(pml_obj, 
+                     optNni = TRUE,      # Find best topology
+                     optBf = TRUE,       # Optimize frequencies
+                     optQ = TRUE,        # Optimize rates
+                     optGamma = TRUE,    # Optimize gamma
+                     optInv = TRUE,      # Optimize invariant
+                     control = pml.control(trace = 1),
+                     multicore = TRUE,   # Enable multicore
+                     mc.cores = 4)       # Use 4 cores
+                     
+```
+
+As with our NJ tree, we need to calculate bootstrap values to see how robust our tree is. After this, we can plot it.
+
+```R
+
+# Calculate bootstrap values
+bs <- bootstrap.pml(ml_tree, 
+                    bs = 1000,          # 100 bootstrap replicates
+                    optNni = TRUE,      # Optimize topology for each
+                    multicore = TRUE,   # Use multiple cores
+                    mc.cores = 4)       # 4 cores
+
+# Convert these to a percentage
+ml_bs_percent <- round(prop.clades(ml_tree$tree, bs) / length(bs) * 100, 0)
+
+# Plot tree with bootstrap values
+plot(ml_tree$tree, main = "ML Tree with Bootstrap Support", 
+     cex = 0.7, label.offset = 0.01, direction = "rightwards")
+nodelabels(ml_bs_percent, cex = 0.6, frame = "none", adj = c(1.2, -0.5))
+add.scale.bar(x = 0, y = 0.5, cex = 0.7, lwd = 2)
+
+# Save tree with bootstrap values
+ml_tree_bs <- ml_tree$tree
+ml_tree_bs$node.label <- ml_bs_percent
+write.tree(ml_tree_bs, file = "trees/ML/ML_tree_bootstrap.nwk")
+cat("\nML tree with bootstrap values saved\n")
+
+```
