@@ -83,7 +83,9 @@ add.scale.bar(x = 0, y = 0.5, cex = 0.7, lwd = 2)
 
 ```
 
-This creates an `unrooted` tree which you will be able to see in your RStudio Plot pane. Have a look at the tree you've created to see if it makes evolutionary sense ie. do related sequences share a common ancestor? Next up, we'll root the tree by defining an outgroup which we spoke about in our previous tutorial. 
+This creates an `unrooted` tree which you will be able to see in your RStudio Plot pane. Have a look at the tree you've created to see if it makes evolutionary sense ie. do related sequences share a common ancestor? Next up, we'll root the tree by defining an outgroup which we spoke about in our previous tutorial. Remember that rooting a tree uses prior knowledge of your sequences to declare which is most divergent, prior to plotting. Rooting at different nodes preserves topology but changes the interpretation of evolutionary relationships.
+
+![root](images/root.png)
 
 ```R
 
@@ -238,6 +240,8 @@ add.scale.bar(x = 0, y = 0.5, cex = 0.7, lwd = 2)
 
 ```
 
+### Neighbour Joining tree with Maximum Likelihood calculated distance matrix
+
 This is all good and well, but we can do better than just using a p-value to calculate distances. While the p-distance is just the proportion of mismatched sites, we can use more sophisticated models to correct for multiple substitutions at the same site, unequal base frequencies, transition/transversion biases amongst other parameters. Prior to building our tree above, we created a distance matrix using `dist.hamming()`. Another option is to use `dist.ml()` which applies a *maximum likelihood* approach. This method asks: `Given a certain evolutionary distance, what's the probability of observing the differences we see in the sequences?` 
 
 The reason that the answer to that question is not 100% is because not all substitutions are equally probable given an amount of evolutionary time. As we saw in our BLAST lecture and tutorial, the probability of one amino acid being substituted for another amino acid with similar chemical properties is is more likely than it being substituted for an amino acid with different chemical properties. These probabilities were described by the substitution matrix that we chose, the most common of which is `BLOSUM62`. 
@@ -348,3 +352,132 @@ dm <- dist.ml(phyDat_alignment, model = "JTT")
 ```
 
 You can now go back to the `NJ(dm)` step above to use this new distance matrix to compare it to the old p-distance matrix we created first.
+
+## Maximum Likelihood tree
+
+Rather than using ML to calculate a distance matrix for a neighbour joining tree, we can use ML to produce the tree itself. This uses a completely different approach in which, rather than first calculating a distance matrix and then clustering branches to minimise branch lengths, we instead use a ML approach to evaluate tree topologies directly against the multiple sequence alignment. In the end, this selects the tree with the topology that maximises the likelihood of the alignment data. This is the workflow of producing a NJ tree using a ML distance matrix:
+
+>Alignment  
+>    ↓  
+>Calculate ML distances (pairwise)  
+>    ↓  
+>Distance Matrix  
+>    ↓  
+>NJ clustering algorithm  
+>    ↓  
+>Tree  
+
+and this is what the workflow of producing a ML tree:
+
+>Alignment  
+>    ↓  
+>Propose tree topology  
+>    ↓  
+>Calculate likelihood of entire alignment given tree  
+>    ↓  
+>Try different topologies  
+>    ↓  
+>Find tree with maximum likelihood  
+
+A logical question to ask is, what tree topology should we initially propose? There are several options including using a random topology or using a *star* topology in which every sequence radiates out of the centre, but most of the time, the best option is to first produce an NJ tree and use this to kick start your ML tree production. As we already have a NJ tree, we can just use that!
+
+Once the initial tree is definied, the ML approach will iterate over small changes to this topology and each time, will assess the maximum likelihood of the entire tree. It will iterate over these potential topologies until it reaches **convergence**. That is to say, after reaching a particular point, more iterations does not lead to improved ML scores. Here's a visual representation of convergence:
+
+```text
+
+Log-likelihood over iterations:
+
+ln L
+     |
+-1400|________________________________  ← Converged (flat)
+     |                      ___/
+-1420|                 ____/
+     |            ____/
+-1440|       ____/
+     |   ___/
+-1460|  /
+     | /
+-1480|/
+     |
+-1500|
+     └────────────────────────────────> Iteration
+      0    2    4    6    8   10   12
+
+     Rapid          Slower        Flat → STOP
+     improvement    gains         (converged)
+     
+```
+
+Before we get to this though, we need to choose a model. Models differ because not every set of genes or proteins evolve in the same way and at the same rate. Let's run a test to see which model fits our dataset best.
+
+
+```R
+
+# Run the model test
+model_test <- modelTest(phyDat_alignment, tree = nj_tree_outgroup, 
+                        model = c("JTT", "WAG", "LG", "Dayhoff", "cpREV", "Blosum62"),
+                        G = TRUE, I = TRUE)
+
+# Select the model with the lowest AIC score as the best
+best_model <- model_test$Model[which.min(model_test$AIC)]
+
+```
+
+This tests the following six models, however many, many more than this have been developed:
+
+>JTT: General protein evolution model  
+WAG: Emphasizes different amino acid frequencies  
+LG: More recent, based on larger datasets  
+Dayhoff: Older model, based on closely related proteins  
+cpREV: Specifically for chloroplast proteins  
+Blosum62: Based on conserved blocks in alignments  
+
+It also tests if allowing rate variation (meaning it won't assume every site evolves at the same rate) will improve the result (G) or if allowing some sites to be invariant will improve the result (I). The most common metric to look at to determine the best model for your alignment is `AIC` which stands for *Akaike Information Criterion*. You don't really need to know the deep mathematics behind how it works, just know that lower is better!
+
+Now that we know the best model for our data, we can calculate our ML tree.
+
+```R
+
+# Create pml object using best model
+pml_obj <- pml(nj_tree_outgroup, phyDat_alignment, model = best_model)
+
+# Optimise everything
+ml_tree <- optim.pml(pml_obj, 
+                     optNni = TRUE,      # Find best topology
+                     optBf = TRUE,       # Optimize frequencies
+                     optQ = TRUE,        # Optimize rates
+                     optGamma = TRUE,    # Optimize gamma
+                     optInv = TRUE,      # Optimize invariant
+                     control = pml.control(trace = 1),
+                     multicore = TRUE,   # Enable multicore
+                     mc.cores = 4)       # Use 4 cores
+                     
+```
+
+As with our NJ tree, we need to calculate bootstrap values to see how robust our tree is. After this, we can plot it.
+
+```R
+
+# Calculate bootstrap values
+bs <- bootstrap.pml(ml_tree, 
+                    bs = 1000,          # 100 bootstrap replicates
+                    optNni = TRUE,      # Optimize topology for each
+                    multicore = TRUE,   # Use multiple cores
+                    mc.cores = 4)       # 4 cores
+
+# Convert these to a percentage
+ml_bs_percent <- round(prop.clades(ml_tree$tree, bs) / length(bs) * 100, 0)
+
+# Plot tree with bootstrap values
+plot(ml_tree$tree, main = "ML Tree with Bootstrap Support", 
+     cex = 0.7, label.offset = 0.01, direction = "rightwards")
+nodelabels(ml_bs_percent, cex = 0.6, frame = "none", adj = c(1.2, -0.5))
+add.scale.bar(x = 0, y = 0.5, cex = 0.7, lwd = 2)
+
+# Save tree with bootstrap values
+ml_tree_bs <- ml_tree$tree
+ml_tree_bs$node.label <- ml_bs_percent
+write.tree(ml_tree_bs, file = "trees/ML/ML_tree_bootstrap.nwk")
+cat("\nML tree with bootstrap values saved\n")
+
+```
