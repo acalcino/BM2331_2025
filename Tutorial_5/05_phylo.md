@@ -342,7 +342,7 @@ Log-likelihood
      
 ```
 
-Ok, let's try create a maximum likelihood distance matrix and then use this to recreate our NJ tree. In this example, as we are using the `JTT` model which is an emperically derived model based on observed substitution rates.
+Ok, let's try create a maximum likelihood distance matrix and then use this to recreate our NJ tree. In this example, as we are using the [JTT](https://academic.oup.com/bioinformatics/article/8/3/275/193076?login=true) model which is an empirically derived model based on observed substitution rates.
 
 ```R
 
