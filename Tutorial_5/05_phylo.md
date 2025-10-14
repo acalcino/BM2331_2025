@@ -1,4 +1,4 @@
-# Phylogenetics
+# Phylogenetics I
 
 Phylogenetics is the study of the relatedness of genes and species. The first branched phylogenetic tree was created by Darwin as a rough sketch in a notebook in 1837 which has since become known as the "I think" sketch.
 
@@ -24,8 +24,13 @@ But when we do this for single genes/proteins, this is called `phylogenetics`, a
 
 Today we are going to build phylogenetic trees of our gene family of interest, based on the multiple sequence alignment we created in the previous tutorial. As with all things bioinformatics, there is more than one way to skin a cat. In the phylogenetics lectures you learnt about multiple methods to infer relatedness between aligned sequences including Neighbour Joining (NJ), Maximum Likelihood (ML), Bayesian Inference etc. Today we'll try to build two trees, one using a simple NJ algorithm and another using a more sophisticated ML algorthim to compare their performance in terms of accuracy and computational demand.
 
+>Phylogenetic trees represent the evolutionary relationships among sequences. Closely related sequences are grouped together, and branch lengths indicate the amount of evolutionary change or genetic distance between them.
+
+This means that to go from a multiple sequence alignment to a phylogenetic tree, we first need a way to compute the *pairwise* distances between each sequence in our alignment. There are many ways to create a distance matrix, and we will try a few, but the simplest one is to simply calculate a p-value describing the number of differences at each position in an alignment between two sequences. We will try this out in the following neighbour joining tree example.
 
 ## Neighbour Joining tree
+
+Neighbour joining builds a tree that iteratively joins pairs of taxa that minimise the total branch length of the tree. To do this, NJ algorithms take in a distance matrix which contains pairwise evolutionary distances between taxa, calculated from a multiple sequence alignment. Let's have a go at creating one so we can see what this means along the way.
 
 In RStudio, set your working directory to your `phylogenetic_project` directory, create a new folder inside called something like `trees` and then inside this, create `NJ`.
 
@@ -50,12 +55,29 @@ alignment <- readAAStringSet("msa/msa_muscle_aligned_sequences.fa")
 # Convert Convert to phangorn format
 phyDat_alignment <- as.phyDat(alignment, type = "AA")
 
-# Create a distance matrix and initial NJ tree for model testing. This calculates the maximum likelihood distances between all pairs of sequences in your alignment, which is the expected number of amino acid substitutions per site.
-dm <- dist.ml(phyDat_alignment)
+```
+
+We are now at the point where we need to take our MSA and use this to calculate a distance matrix. We are going to use the dist.hamming() function from the `phangorn` package that calculates the number of differing positions in a pairwise alignment divided by the total number of positions - essentially a p-value.
+
+```R
+
+# Create a p-value based distance matrix
+dm <- dist.hamming(phyDat_alignment)
+
+# To inspect dm, convert to a matrix
+dm_matrix <- as.matrix(dm)
+
+```
+
+Now we can build and inspect our first tree.
+
+```R
+
+# Build an NJ tree from our distance matrix
 nj_tree <- NJ(dm)
 
 # Visualise this initial tree
-plot(nj_tree, main = "Neighbor-Joining Tree (midpoint rooted)", 
+plot(nj_tree, main = "Neighbor-Joining Tree", 
      cex = 0.7, label.offset = 0.01, direction = "rightwards")
 add.scale.bar(x = 0, y = 0.5, cex = 0.7, lwd = 2)
 
@@ -75,7 +97,7 @@ plot(nj_tree_outgroup, main = "Neighbor-Joining Tree (outgroup rooted)",
 add.scale.bar(x = 0, y = 0.5, cex = 0.7, lwd = 2)
 
 # Save your rooted NJ tree in Newick format
-write.tree(nj_tree, file = "trees/NJ/NJ_tree.nwk"
+write.tree(nj_tree_outgroup, file = "trees/NJ/NJ_tree_outgroup.nwk"
 
 ```
 
@@ -190,7 +212,7 @@ for(i in 1:1000) {
   boot_phyDat <- as.phyDat(boot_alignment)
   
   # Calculate distance matrix of evolutionary distances between every pair of sequences
-  boot_dm <- dist.ml(boot_phyDat)
+  boot_dm <- dist.hamming(boot_phyDat)
   
   # Build tree
   boot_tree <- NJ(boot_dm)
@@ -199,6 +221,7 @@ for(i in 1:1000) {
   boot_tree <- root(boot_tree, outgroup = outgroup, resolve.root = TRUE)
   boot_trees[[i]] <- boot_tree
   
+  # Monitor progress and report every time ten new bootstraps have been completed
   if(i %% 10 == 0) cat(i, " ")
 }
 cat("Done!\n")
@@ -215,7 +238,123 @@ add.scale.bar(x = 0, y = 0.5, cex = 0.7, lwd = 2)
 
 ```
 
-Neighbour Joining doesn't care about the evolutionary process - it just takes a distance matrix and clusters accordingly. NJ doesn't need to know how distances 
+This is all good and well, but we can do better than just using a p-value to calculate distances. While the p-distance is just the proportion of mismatched sites, we can use more sophisticated models to correct for multiple substitutions at the same site, unequal base frequencies, transition/transversion biases amongst other parameters. Prior to building our tree above, we created a distance matrix using `dist.hamming()`. Another option is to use `dist.ml()` which applies a *maximum likelihood* approach. This method asks: `Given a certain evolutionary distance, what's the probability of observing the differences we see in the sequences?` 
+
+The reason that the answer to that question is not 100% is because not all substitutions are equally probable given an amount of evolutionary time. As we saw in our BLAST lecture and tutorial, the probability of one amino acid being substituted for another amino acid with similar chemical properties is is more likely than it being substituted for an amino acid with different chemical properties. These probabilities were described by the substitution matrix that we chose, the most common of which is `BLOSUM62`. 
+
+Like the BLAST algorithm, phylogenetic analysis can take advantage of sophisticated substitution matrices to more accurately model evolutionary change between two sequences. When we run `dist.ml()`, at every position in the pairwise alignment, it calculates the probability that we see the two amino acids observed given an evolutionary distance of `d`, the units of which are `expected subsitutions per site`. It then sums up the log of these likelihood values for each position to calculate a `log likelihood` value for the whole pairwise alignment. The algorithm then recalculates this value multiple times using a range of vaulues of `d` so that in the end it can determine the value of `d` at which the log likelihood is maximised. It are these `maximum likelihood distance values (d)` that are used to populate the distance matrix.
+
+Here's a visual representation:
+
+```text
+
+# Alignment
+Position:    1  2  3  4  5
+Sequence A:  M  K  R  D  L
+Sequence B:  M  K  H  D  V
+             ✓  ✓  ✗  ✓  ✗
+
+# Key equations
+P(i→j | distance d) = probability that amino acid i changes to j 
+                      over evolutionary distance d
+
+P(i=i | distance d) = probability amino acid i stays unchanged
+                      over evolutionary distance d
+                      
+# Calculate likelihood for distance d = 0.1 (0.1 changes per site)
+Position 1: M → M (no change)
+P(M stays M | d=0.1) = 0.95  (high - short time, unlikely to change)
+
+Position 2: K → K (no change)
+P(K stays K | d=0.1) = 0.94
+
+Position 3: R → H (changed)
+P(R→H | d=0.1) = 0.008  (low - not much time for change)
+
+Position 4: D → D (no change)
+P(D stays D | d=0.1) = 0.95
+
+Position 5: L → V (changed)
+P(L→V | d=0.1) = 0.012  (low - similar amino acids but still unlikely in short time)
+
+Total likelihood = 0.95 × 0.94 × 0.008 × 0.95 × 0.012 = 0.0000081
+Log-likelihood = ln(0.0000081) = −9.42
+
+# Calculate likelihood for distance d = 0.5
+Position 1: M → M (no change)
+P(M stays M | d=0.5) = 0.65  (still likely to stay same)
+
+Position 2: K → K (no change)
+P(K stays K | d=0.5) = 0.63
+
+Position 3: R → H (changed)
+P(R→H | d=0.5) = 0.042  (more reasonable - had time to change)
+
+Position 4: D → D (no change)
+P(D stays D | d=0.5) = 0.64
+
+Position 5: L → V (changed)
+P(L→V | d=0.5) = 0.055  (reasonable for similar amino acids)
+
+Total likelihood = 0.65 × 0.63 × 0.042 × 0.64 × 0.055 = 0.000061
+Log-likelihood = ln(0.000061) = -7.41
+
+# Calculate likelihood for distance d = 1.0
+Position 1: M → M (no change)
+P(M stays M | d=1.0) = 0.35  (lower - had lots of time to change)
+
+Position 2: K → K (no change)
+P(K stays K | d=1.0) = 0.33
+
+Position 3: R → H (changed)
+P(R→H | d=1.0) = 0.068  (high - had time)
+
+Position 4: D → D (no change)
+P(D stays D | d=1.0) = 0.34
+
+Position 5: L → V (changed)
+P(L→V | d=1.0) = 0.082  (high - had time)
+
+Total likelihood = 0.35 × 0.33 × 0.068 × 0.34 × 0.082 = 0.000022
+Log-likelihood = ln(0.000022) = -8.42
+
+# Plot the log-likelihood distance
+Log-likelihood
+
+     |
+-7.5 |              ★ (maximum at d ≈ 0.5)
+     |            /   \
+-8.0 |          /       \
+     |        /           \
+-8.5 |      /               \
+     |    /                   \
+-9.0 |  /                       \
+     | ●                         ●
+-9.5 |/__________________________\____
+     0   0.2  0.4  0.6  0.8  1.0    d (substitutions/site)
+
+     d=0.1        d=0.5        d=1.0
+     ln(L)=-9.42  ln(L)=-7.41  ln(L)=-8.42
+     
+```
+
+
+
+Ok, let's try create a maximum likelihood distance matrix and then use this to recreate our NJ tree. In this example, as we are using the `JTT` model which is an emperically derived model based on observed substitution rates.
+
+```R
+
+# Create a maximum likelihood distance matrix
+dm <- dist.ml(phyDat_alignment, model = "JTT")
+
+```
+
+You can now go back to the `NJ(dm)` step above to use this new distance matrix to compare it to the old p-distance matrix we created first.
+
+It also calculates this likelihood using a range of possible values of `d` so that , and it does this multiple times using a range of values for distance
+
+
+Neighbour Joining doesn't care about the evolutionary process - it just takes a distance matrix and groups the sequences accordingly.
 
 
 
