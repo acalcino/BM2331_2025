@@ -238,6 +238,8 @@ add.scale.bar(x = 0, y = 0.5, cex = 0.7, lwd = 2)
 
 ```
 
+### Neighbour Joining tree with Maximum Likelihood calculated distance matrix
+
 This is all good and well, but we can do better than just using a p-value to calculate distances. While the p-distance is just the proportion of mismatched sites, we can use more sophisticated models to correct for multiple substitutions at the same site, unequal base frequencies, transition/transversion biases amongst other parameters. Prior to building our tree above, we created a distance matrix using `dist.hamming()`. Another option is to use `dist.ml()` which applies a *maximum likelihood* approach. This method asks: `Given a certain evolutionary distance, what's the probability of observing the differences we see in the sequences?` 
 
 The reason that the answer to that question is not 100% is because not all substitutions are equally probable given an amount of evolutionary time. As we saw in our BLAST lecture and tutorial, the probability of one amino acid being substituted for another amino acid with similar chemical properties is is more likely than it being substituted for an amino acid with different chemical properties. These probabilities were described by the substitution matrix that we chose, the most common of which is `BLOSUM62`. 
@@ -348,3 +350,60 @@ dm <- dist.ml(phyDat_alignment, model = "JTT")
 ```
 
 You can now go back to the `NJ(dm)` step above to use this new distance matrix to compare it to the old p-distance matrix we created first.
+
+## Maximum Likelihood tree
+
+Rather than using ML to calculate a distance matrix for a neighbour joining tree, we can use ML to produce the tree itself. This uses a completely different approach in which, rather than first calculating a distance matrix and then clustering branches to minimise branch lengths, we instead use a ML approach to evaluate tree topologies directly against the multiple sequence alignment. In the end, this selects the tree with the topology that maximises the likelihood of the alignment data. This is the workflow of producing a NJ tree using a ML distance matrix:
+
+>Alignment
+    ↓
+Calculate ML distances (pairwise)
+    ↓
+Distance Matrix
+    ↓
+NJ clustering algorithm
+    ↓
+Tree
+
+and this is what the workflow of producing a ML tree:
+
+>Alignment
+    ↓
+Propose tree topology
+    ↓
+Calculate likelihood of entire alignment given tree
+    ↓
+Try different topologies
+    ↓
+Find tree with maximum likelihood
+
+A logical question to ask is, what tree topology should we initially propose? There are several options including using a random topology or using a *star* topology in which every sequence radiates out of the centre, but most of the time, the best option is to first produce an NJ tree and use this to kick start your ML tree production. As we already have a NJ tree, we can just use that!
+
+Once the initial tree is definied, the ML approach will iterate over small changes to this topology and each time, will assess the maximum likelihood of the entire tree. It will iterate over these potential topologies until it reaches **convergence**. That is to say, after reaching a particular point, more iterations does not lead to improved ML scores. Here's a visual representation of convergence:
+
+```text
+
+Log-likelihood over iterations:
+
+ln L
+     |
+-1400|________________________________  ← Converged (flat)
+     |                      ___/
+-1420|                 ____/
+     |            ____/
+-1440|       ____/
+     |   ___/
+-1460|  /
+     | /
+-1480|/
+     |
+-1500|
+     └────────────────────────────────> Iteration
+      0    2    4    6    8   10   12
+
+     Rapid          Slower        Flat → STOP
+     improvement    gains         (converged)
+     
+```
+
+
