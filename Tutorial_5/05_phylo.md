@@ -83,6 +83,26 @@ add.scale.bar(x = 0, y = 0.5, cex = 0.7, lwd = 2)
 
 ```
 
+Even better than this, we can use `ggtree` rather than base R to plot our tree. That way we can save it as an object rather than re-plotting it every time we want to look at it.
+
+```R
+library(ggtree)
+library(ggplot2)
+library(ape)
+
+p <- ggtree(nj_tree) +
+    geom_tiplab(size = 3) +
+    geom_treescale(x = 0, y = -1, width = 0.1, linesize = 2) +  # Scale bar
+    hexpand(.4) +  # Adds extra space for labels
+    ggtitle("Neighbor-Joining Tree")
+
+p
+
+# Save the plot as a png
+ggsave("trees/NJ/nj_tree.png", plot = p, width = 12, height = 8, dpi = 300)
+
+```
+
 This creates an `unrooted` tree which you will be able to see in your RStudio Plot pane. Have a look at the tree you've created to see if it makes evolutionary sense ie. do related sequences share a common ancestor? Next up, we'll root the tree by defining an outgroup which we spoke about in our previous tutorial. Remember that rooting a tree uses prior knowledge of your sequences to declare which is most divergent, prior to plotting. Rooting at different nodes preserves topology but changes the interpretation of evolutionary relationships.
 
 ![root](images/root.png)
@@ -94,12 +114,15 @@ outgroup <- "Cin_Pax6_NP_001027641.1 homeobox transcription factor Pax6 [Ciona i
 nj_tree_outgroup <- root(nj_tree, outgroup = outgroup, resolve.root = TRUE)
 
 # Plot your rooted tree
-plot(nj_tree_outgroup, main = "Neighbor-Joining Tree (outgroup rooted)", 
-     cex = 0.7, label.offset = 0.01, direction = "rightwards")
-add.scale.bar(x = 0, y = 0.5, cex = 0.7, lwd = 2)
+p_rooted <- ggtree(nj_tree_outgroup) +
+            geom_tiplab(size = 3) +
+            geom_treescale(x = 0, y = -1, width = 0.1, linesize = 2) +
+            hexpand(.4) +
+            ggtitle("Neighbor-Joining Tree (outgroup rooted)")
+  
+p_rooted
 
-# Save your rooted NJ tree in Newick format
-write.tree(nj_tree_outgroup, file = "trees/NJ/NJ_tree_outgroup.nwk"
+ggsave("trees/NJ/nj_tree_rooted.png", plot = p_rooted, width = 12, height = 8, dpi = 300)
 
 ```
 
@@ -150,7 +173,7 @@ Randomly selected positions: 2, 4, 4, 6, 8, 3, 1, 1
 
 ```text
 
-Position:         2  4  4  6  8  3  1  1
+Position:          2  4  4  6  8  3  1  1
 Sequence A:        K  D  D  M  E  R  M  M
 Sequence B:        K  D  D  M  Q  H  M  M
 Sequence C:        S  D  D  I  E  R  L  L
@@ -233,10 +256,22 @@ nj_bs <- prop.clades(nj_tree_outgroup, boot_trees)
 nj_bs_percent <- round(nj_bs / length(boot_trees) * 100, 0)
 
 # Plot NJ tree with bootstrap values
-plot(nj_tree_outgroup, main = "NJ Tree with Bootstrap Support (outgroup rooted)", 
-     cex = 0.7, label.offset = 0.01, direction = "rightwards")
-nodelabels(nj_bs_percent, cex = 0.6, frame = "none", adj = c(1.2, -0.5))
-add.scale.bar(x = 0, y = 0.5, cex = 0.7, lwd = 2)
+# Add bootstrap values to tree
+nj_tree_outgroup$node.label <- nj_bs_percent
+
+# Plot using the label aesthetic
+p_bootstrapped <- ggtree(nj_tree_outgroup) +
+    geom_tiplab(size = 3, offset = 0.01) +
+    geom_nodelab(aes(label = label),      # Now it uses tree$node.label
+                 size = 2.5,
+                 hjust = -0.2,
+                 vjust = 0.5) +
+    geom_treescale(x = 0, y = -0.5, 
+                   width = 0.1, 
+                   linesize = 2,
+                   fontsize = 3) +
+    hexpand(.4) +
+    ggtitle("NJ Tree with Bootstrap Support (outgroup rooted)")
 
 ```
 
@@ -347,11 +382,11 @@ Ok, let's try create a maximum likelihood distance matrix and then use this to r
 ```R
 
 # Create a maximum likelihood distance matrix
-dm <- dist.ml(phyDat_alignment, model = "JTT")
+dm_ml <- dist.ml(phyDat_alignment, model = "JTT")
 
 ```
 
-You can now go back to the `NJ(dm)` step above to use this new distance matrix to compare it to the old p-distance matrix we created first.
+You can now go back to the `NJ(dm)` step above to use this new distance matrix to compare it to the old p-distance matrix we created first. Remember when calculating bootstrap values to use `boot_dm <- dist.ml(boot_phyDat, model = "JTT")` rather than `boot_dm <- dist.hamming(boot_phyDat)`.
 
 ## Maximum Likelihood tree
 
@@ -418,9 +453,6 @@ model_test <- modelTest(phyDat_alignment, tree = nj_tree_outgroup,
                         model = c("JTT", "WAG", "LG", "Dayhoff", "cpREV", "Blosum62"),
                         G = TRUE, I = TRUE)
 
-# Select the model with the lowest AIC score as the best
-best_model <- model_test$Model[which.min(model_test$AIC)]
-
 ```
 
 This tests the following six models, however many, many more than this have been developed:
@@ -434,18 +466,20 @@ Blosum62: Based on conserved blocks in alignments
 
 It also tests if allowing rate variation (meaning it won't assume every site evolves at the same rate) will improve the result (G) or if allowing some sites to be invariant will improve the result (I). The most common metric to look at to determine the best model for your alignment is `AIC` which stands for *Akaike Information Criterion*. You don't really need to know the deep mathematics behind how it works, just know that lower is better!
 
-Now that we know the best model for our data, we can calculate our ML tree.
+Now that we know the best model for our data, we can calculate our ML tree. I am also specifying `k = 4` and `inv = TRUE` here to reflect that my model test found that using `G` and `I` improved results.
 
 ```R
 
+# You first need to unroot your tree
+unrooted_tree <- unroot(nj_tree_outgroup)
+
 # Create pml object using best model
-pml_obj <- pml(nj_tree_outgroup, phyDat_alignment, model = best_model)
+pml_obj <- pml(unrooted_tree, phyDat_alignment, model = "Dayhoff", k = 4, inv = 0.1)
 
 # Optimise everything
 ml_tree <- optim.pml(pml_obj, 
                      optNni = TRUE,      # Find best topology
                      optBf = TRUE,       # Optimize frequencies
-                     optQ = TRUE,        # Optimize rates
                      optGamma = TRUE,    # Optimize gamma
                      optInv = TRUE,      # Optimize invariant
                      control = pml.control(trace = 1),
@@ -458,15 +492,20 @@ As with our NJ tree, we need to calculate bootstrap values to see how robust our
 
 ```R
 
-# Calculate bootstrap values
-bs <- bootstrap.pml(ml_tree, 
-                    bs = 1000,          # 100 bootstrap replicates
-                    optNni = TRUE,      # Optimize topology for each
-                    multicore = TRUE,   # Use multiple cores
-                    mc.cores = 4)       # 4 cores
+# Calculate bootstrap values using pbmcapply for multithreaded support progress bar output
 
-# Convert these to a percentage
-ml_bs_percent <- round(prop.clades(ml_tree$tree, bs) / length(bs) * 100, 0)
+library(pbmcapply)
+
+# Start of with 100 bootstraps and 16 cores
+bs_results <- pbmclapply(1:100, function(i) {
+              bootstrap.pml(ml_tree, bs = 1, 
+              optNni = TRUE)
+              }, 
+              mc.cores = 16)
+
+# Combine the results and calculate percentage
+bs_combined <- do.call(c, bs_results)
+ml_bs_percent <- round(prop.clades(ml_tree$tree, bs_combined) / length(bs_combined) * 100, 0)
 
 # Plot tree with bootstrap values
 plot(ml_tree$tree, main = "ML Tree with Bootstrap Support", 
@@ -474,10 +513,33 @@ plot(ml_tree$tree, main = "ML Tree with Bootstrap Support",
 nodelabels(ml_bs_percent, cex = 0.6, frame = "none", adj = c(1.2, -0.5))
 add.scale.bar(x = 0, y = 0.5, cex = 0.7, lwd = 2)
 
-# Save tree with bootstrap values
-ml_tree_bs <- ml_tree$tree
-ml_tree_bs$node.label <- ml_bs_percent
-write.tree(ml_tree_bs, file = "trees/ML/ML_tree_bootstrap.nwk")
-cat("\nML tree with bootstrap values saved\n")
+# Root the tree and plot again
+
+outgroup <- "Cin_Pax6_NP_001027641.1 homeobox transcription factor Pax6 [Ciona intestinalis]"
+
+# Root the tree using the outgroup
+rooted_tree <- root(ml_tree$tree, outgroup = outgroup, resolve.root = TRUE)
+
+# Plot the rooted tree
+p_bootstrapped <- ggtree(rooted_tree) +
+    geom_tiplab(size = 3, offset = 0.01) +
+    geom_nodelab(aes(label = label),
+                 size = 2.5,
+                 hjust = -0.2,
+                 vjust = 0.5) +
+    geom_treescale(x = 0, y = -0.5, 
+                   width = 0.1, 
+                   linesize = 2,
+                   fontsize = 3) +
+    hexpand(.4) +
+    ggtitle("ML Tree with Bootstrap Support (outgroup rooted)")
+
+p_bootstrapped
+
+# Save as png
+ggsave("trees/ML/ml_tree_rooted.png", plot = p_bootstrapped, width = 12, height = 8, dpi = 300)
+
+# Save tree with bootstrap values in Newick format
+write.tree(rooted_tree, file = "trees/ML/ML_rooted_tree_bootstrap.nwk")
 
 ```
