@@ -132,10 +132,12 @@ system("trimal -in ~/working-directory/phylogenetic_project/msa/mafft/hox_ciona_
 
 Instead of `-automated1`, try one of the other options such as `-gappyout` or `-gt 0.5`. Have a read of what these do by bringing up the trimal help file on the command line.
 
-Another option is [gblocks](https://home.cc.umanitoba.ca/~psgendb/doc/Castresana/Gblocks_documentation.html#:~:text=Gblocks%20is%20a%20computer%20program,of%20DNA%20or%20protein%20sequences.). This is more sophisticated than trimal but doesn't seem to work very well if you don't have a large alignment file.
-
+Another option is [gblocks](https://home.cc.umanitoba.ca/~psgendb/doc/Castresana/Gblocks_documentation.html#:~:text=Gblocks%20is%20a%20computer%20program,of%20DNA%20or%20protein%20sequences.). This is more sophisticated than trimal but doesn't seem to work very well if you don't have a large alignment file. Gblocks is normally a command line tool but there is an R implementation built into the [ips](https://r-packages.io/packages/ips) package.
 
 ```R
+
+# Load the ips library
+library(ips)
 
 # Read in the alignment file
 aligned <- readAAStringSet("msa/mafft/hox_ciona_mafft_genafpair_alignment.fa")
