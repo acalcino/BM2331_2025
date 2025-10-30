@@ -396,10 +396,10 @@ Several options exist for which tree we should begin with including a random tre
 
 As such, you should save an NJ tree as an RData object so that we can reuse it next week. While it's not super important that this be the best tree you created today (ie. the NJ tree from your ML distance matrix), choosing the best tree will reduce compute time and can improve the final result. Assuming you followed the instructions above, your options for which tree to save will either be:
 
->nj_tree # The initial tree you produced
-nj_tree_outgroup # The rooted, bootstrapped version of the NJ p-value tree
-nj_ml_tree # The tree produced using the ML distance matrix
-nj_ml_tree_outgroup # The rooted, bootstrapped version of the NJ ML tree
+>nj_tree # The initial tree you produced  
+>nj_tree_outgroup # The rooted, bootstrapped version of the NJ p-value tree  
+>nj_ml_tree # The tree produced using the ML distance matrix  
+>nj_ml_tree_outgroup # The rooted, bootstrapped version of the NJ ML tree  
 
 As my best tree was the NJ ML tree, I'll go with that one.
 
