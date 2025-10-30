@@ -388,158 +388,33 @@ dm_ml <- dist.ml(phyDat_alignment, model = "JTT")
 
 You can now go back to the `NJ(dm)` step above to use this new distance matrix to compare it to the old p-distance matrix we created first. Remember when calculating bootstrap values to use `boot_dm <- dist.ml(boot_phyDat, model = "JTT")` rather than `boot_dm <- dist.hamming(boot_phyDat)`.
 
-## Maximum Likelihood tree
+## For next week
 
-Rather than using ML to calculate a distance matrix for a neighbour joining tree, we can use ML to produce the tree itself. This uses a completely different approach in which, rather than first calculating a distance matrix and then clustering branches to minimise branch lengths, we instead use a ML approach to evaluate tree topologies directly against the multiple sequence alignment. In the end, this selects the tree with the topology that maximises the likelihood of the alignment data. This is the workflow of producing a NJ tree using a ML distance matrix:
+Today we produced two trees - a neighbour joining tree using a p-value distance matrix, and a second neighbour joining tree using a maximum likelihood distance matrix. Next week we will move on from NJ trees and produce a Maximum Likelihood tree directly. To do this, we are required to provide an initial tree over which the ML algorithm will iterate to produce a new, hopefully more reliable tree. 
 
->Alignment  
->    ↓  
->Calculate ML distances (pairwise)  
->    ↓  
->Distance Matrix  
->    ↓  
->NJ clustering algorithm  
->    ↓  
->Tree  
+Several options exist for which tree we should begin with including a random tree with a topology not based on anything biological at all, a tree with a single node from which all branches radiate (basically a huge polytomy that resembles a star), or we could provide it a guide tree calculated using some other algorithm that has some sort of grounding in biological truth. How convenient then that that's exactly what we produced today!
 
-and this is what the workflow of producing a ML tree:
+As such, you should save an NJ tree as an RData object so that we can reuse it next week. While it's not super important that this be the best tree you created today (ie. the NJ tree from your ML distance matrix), choosing the best tree will reduce compute time and can improve the final result. Assuming you followed the instructions above, your options for which tree to save will either be:
 
->Alignment  
->    ↓  
->Propose tree topology  
->    ↓  
->Calculate likelihood of entire alignment given tree  
->    ↓  
->Try different topologies  
->    ↓  
->Find tree with maximum likelihood  
+>nj_tree # The initial tree you produced
+nj_tree_outgroup # The rooted, bootstrapped version of the NJ p-value tree
+nj_ml_tree # The tree produced using the ML distance matrix
+nj_ml_tree_outgroup # The rooted, bootstrapped version of the NJ ML tree
 
-A logical question to ask is, what tree topology should we initially propose? There are several options including using a random topology or using a *star* topology in which every sequence radiates out of the centre, but most of the time, the best option is to first produce an NJ tree and use this to kick start your ML tree production. As we already have a NJ tree, we can just use that!
-
-Once the initial tree is definied, the ML approach will iterate over small changes to this topology and each time, will assess the maximum likelihood of the entire tree. It will iterate over these potential topologies until it reaches **convergence**. That is to say, after reaching a particular point, more iterations does not lead to improved ML scores. Here's a visual representation of convergence:
-
-```text
-
-Log-likelihood over iterations:
-
-ln L
-     |
--1400|________________________________  ← Converged (flat)
-     |                      ___/
--1420|                 ____/
-     |            ____/
--1440|       ____/
-     |   ___/
--1460|  /
-     | /
--1480|/
-     |
--1500|
-     └────────────────────────────────> Iteration
-      0    2    4    6    8   10   12
-
-     Rapid          Slower        Flat → STOP
-     improvement    gains         (converged)
-     
-```
-
-Before we get to this though, we need to choose a model. Models differ because not every set of genes or proteins evolve in the same way and at the same rate. Let's run a test to see which model fits our dataset best.
-
+As my best tree was the NJ ML tree, I'll go with that one.
 
 ```R
 
-# Run the model test
-model_test <- modelTest(phyDat_alignment, tree = nj_tree_outgroup, 
-                        model = c("JTT", "WAG", "LG", "Dayhoff", "cpREV", "Blosum62"),
-                        G = TRUE, I = TRUE)
+save(nj_ml_tree_outgroup, file = "trees/NJ/nj_ml_tree_outgroup.RData")
 
 ```
 
-This tests the following six models, however many, many more than this have been developed:
-
->JTT: General protein evolution model  
-WAG: Emphasizes different amino acid frequencies  
-LG: More recent, based on larger datasets  
-Dayhoff: Older model, based on closely related proteins  
-cpREV: Specifically for chloroplast proteins  
-Blosum62: Based on conserved blocks in alignments  
-
-It also tests if allowing rate variation (meaning it won't assume every site evolves at the same rate) will improve the result (G) or if allowing some sites to be invariant will improve the result (I). The most common metric to look at to determine the best model for your alignment is `AIC` which stands for *Akaike Information Criterion*. You don't really need to know the deep mathematics behind how it works, just know that lower is better!
-
-Now that we know the best model for our data, we can calculate our ML tree. I am also specifying `k = 4` and `inv = TRUE` here to reflect that my model test found that using `G` and `I` improved results.
+If you've lost the tree and need to regenerate it, here's another option for you.
 
 ```R
 
-# You first need to unroot your tree
-unrooted_tree <- unroot(nj_tree_outgroup)
-
-# Create pml object using best model
-pml_obj <- pml(unrooted_tree, phyDat_alignment, model = "Dayhoff", k = 4, inv = 0.1)
-
-# Optimise everything
-ml_tree <- optim.pml(pml_obj, 
-                     optNni = TRUE,      # Find best topology
-                     optBf = TRUE,       # Optimize frequencies
-                     optGamma = TRUE,    # Optimize gamma
-                     optInv = TRUE,      # Optimize invariant
-                     control = pml.control(trace = 1),
-                     multicore = TRUE,   # Enable multicore
-                     mc.cores = 4)       # Use 4 cores
-                     
-```
-
-As with our NJ tree, we need to calculate bootstrap values to see how robust our tree is. After this, we can plot it.
-
-```R
-
-# Calculate bootstrap values using pbmcapply for multithreaded support progress bar output
-
-library(pbmcapply)
-
-# Start of with 100 bootstraps and 16 cores
-bs_results <- pbmclapply(1:100, function(i) {
-              bootstrap.pml(ml_tree, bs = 1, 
-              optNni = TRUE)
-              }, 
-              mc.cores = 16)
-
-# Combine the results and calculate percentage
-bs_combined <- do.call(c, bs_results)
-ml_bs_percent <- round(prop.clades(ml_tree$tree, bs_combined) / length(bs_combined) * 100, 0)
-
-# Plot tree with bootstrap values
-plot(ml_tree$tree, main = "ML Tree with Bootstrap Support", 
-     cex = 0.7, label.offset = 0.01, direction = "rightwards")
-nodelabels(ml_bs_percent, cex = 0.6, frame = "none", adj = c(1.2, -0.5))
-add.scale.bar(x = 0, y = 0.5, cex = 0.7, lwd = 2)
-
-# Root the tree and plot again
-
-outgroup <- "Cin_Pax6_NP_001027641.1 homeobox transcription factor Pax6 [Ciona intestinalis]"
-
-# Root the tree using the outgroup
-rooted_tree <- root(ml_tree$tree, outgroup = outgroup, resolve.root = TRUE)
-
-# Plot the rooted tree
-p_bootstrapped <- ggtree(rooted_tree) +
-    geom_tiplab(size = 3, offset = 0.01) +
-    geom_nodelab(aes(label = label),
-                 size = 2.5,
-                 hjust = -0.2,
-                 vjust = 0.5) +
-    geom_treescale(x = 0, y = -0.5, 
-                   width = 0.1, 
-                   linesize = 2,
-                   fontsize = 3) +
-    hexpand(.4) +
-    ggtitle("ML Tree with Bootstrap Support (outgroup rooted)")
-
-p_bootstrapped
-
-# Save as png
-ggsave("trees/ML/ml_tree_rooted.png", plot = p_bootstrapped, width = 12, height = 8, dpi = 300)
-
-# Save tree with bootstrap values in Newick format
-write.tree(rooted_tree, file = "trees/ML/ML_rooted_tree_bootstrap.nwk")
+dm_ml <- dist.ml(phyDat_alignment, model = "JTT")
+nj_ml_tree <- NJ(dm_ml)
+save(nj_ml_tree, file = "trees/NJ/nj_ml_tree.RData")
 
 ```
