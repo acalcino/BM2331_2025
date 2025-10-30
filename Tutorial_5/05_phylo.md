@@ -413,6 +413,16 @@ If you've lost the tree and need to regenerate it, here's another option for you
 
 ```R
 
+library(phangorn)
+library(Biostrings)
+
+# Load the alignment file
+alignment <- readAAStringSet("msa/msa_muscle_aligned_sequences.fa")
+
+# Convert Convert to phangorn format
+phyDat_alignment <- as.phyDat(alignment, type = "AA")
+
+# Create dm, produce tree and save
 dm_ml <- dist.ml(phyDat_alignment, model = "JTT")
 nj_ml_tree <- NJ(dm_ml)
 save(nj_ml_tree, file = "trees/NJ/nj_ml_tree.RData")
