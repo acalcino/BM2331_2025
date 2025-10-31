@@ -176,6 +176,9 @@ ml_bootstrapped_rooted <- ggtree(rooted_tree) +
 
 ml_bootstrapped_rooted
 
+# If you find your tip labels too long, shorten them by removing everything after the first space
+rooted_tree$tip.label <- gsub(" .*", "", rooted_tree$tip.label)
+
 # Save as png
 ggsave("trees/ML/ml_bootstrapped_rooted.png", plot = ml_bootstrapped_rooted, width = 12, height = 8, dpi = 300)
 
@@ -183,3 +186,9 @@ ggsave("trees/ML/ml_bootstrapped_rooted.png", plot = ml_bootstrapped_rooted, wid
 write.tree(rooted_tree, file = "trees/ML/ml_bootstrapped_rooted_tree.nwk")
 
 ```
+
+ggtree is a powerful package that lets you modify your trees is many interesting ways. Feel free to explore everything ggtree offers [here](https://yulab-smu.top/treedata-book/). If you'd prefer a graphical interface, there are stand alone programs you can use One of these is [TreeViewer](https://treeviewer.org/) which is available for Linux, Mac and, ughh, Windows too. Once you've loaded your tree, you'll need to click the `Modules` tab, then `Plot actions`. Under `Labels`, change `Attribute` to `Support` and make sure `Attribute type` is set as `Number`.
+
+![treeviewer](images/treeviewer.jpg)
+
+TreeViewer also has a bajillion ways to customise your tree and you can read about it all [here](https://github.com/arklumpus/TreeViewer/wiki). Once you have finished making changes, click `File`, `Export` to save it as a pdf, png or svg file. You can then import this into your RMarkdown document if you wish.
