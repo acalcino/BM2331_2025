@@ -24,3 +24,5 @@ Week 4: [Multiple sequence alignment](Tutorial_4/04_msa.md)
 Week 6: [Phylogenetics I](Tutorial_5/05_phylo.md)
 
 Week 7: [Phylogenetics II](Tutorial_6/06_phylo.md)
+
+Week 9: [Ream mapping](Tutorial_7/07_map.md)
